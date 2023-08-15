@@ -68,22 +68,36 @@ function tableRefresh() {
     $.ajax({
         url: "https://localhost:44384/api/Parcel/getall",
         method: "GET",
-        success: function (data) {
+        success: function (parcels) {
             // Veri başarıyla alındığında yapılacak işlemler
-            console.log(data);
-            for (let i = 0; i < data.length; i++) {
+            console.log(parcels);
+            $("#table").empty();
+
+            var baslik = tablo.insertRow(tablo.rows.length);
+            var baslikHucre1 = baslik.insertCell(0);
+            var baslikHucre2 = baslik.insertCell(1);
+            var baslikHucre3 = baslik.insertCell(2);
+            var baslikHucre4 = baslik.insertCell(3);
+            baslik.style = "height: 2.5rem;"
+            baslikHucre1.innerHTML = "Parsel İl";
+            baslikHucre2.innerHTML = "Parsel İlçe";
+            baslikHucre3.innerHTML = "Parsel Mahalle";
+            baslikHucre4.innerHTML = "";
+
+
+            for (let i = 0; i < parcels.length; i++) {
                 var yeniSatir = tablo.insertRow(tablo.rows.length);
                 yeniSatir.style = "background-color: white;"
-                yeniSatir.id = data[i].parcelId;
+                yeniSatir.id = parcels[i].parcelId;
 
                 var huc1 = yeniSatir.insertCell(0);
                 var huc2 = yeniSatir.insertCell(1);
                 var huc3 = yeniSatir.insertCell(2);
                 var huc4 = yeniSatir.insertCell(3);
 
-                huc1.innerHTML = data[i].parcelCity;
-                huc2.innerHTML = data[i].parcelDistrict;
-                huc3.innerHTML = data[i].parcelNeighbourhood;
+                huc1.innerHTML = parcels[i].parcelCity;
+                huc2.innerHTML = parcels[i].parcelDistrict;
+                huc3.innerHTML = parcels[i].parcelNeighbourhood;
 
                 var duzenleButon = document.createElement("button");        // Tablo Edit butonu
                 duzenleButon.innerHTML = '<i class="fa-regular fa-pen-to-square"></i> Edit';
@@ -141,7 +155,6 @@ saveParcelBtn.addEventListener("click", function () {
         type: "POST",
         url: "https://localhost:44384/api/Parcel/add",
         data: JSON.stringify(veri),
-        // dataType: "JSON",
         contentType: "application/json",
         success: function (response) {
             console.log("İstek başarıyla tamamlandı. Sunucu cevabı:", response);
@@ -161,12 +174,19 @@ function deleteRow(mevcutSatir) {
     var uyar = confirm("Bu satırı silmek istediğinize emin misiniz?");
     if (uyar) {
         mevcutSatir.parentNode.removeChild(mevcutSatir);
+        
+        var silinecekVeri = {
+            "parcelId": parseInt(mevcutSatir.id) 
+        }
+
         $.ajax({
             type: "DELETE",
             url: "https://localhost:44384/api/Parcel/delete",
-            data: JSON.stringify(parcelId),
+            data: JSON.stringify(silinecekVeri),
+            contentType: "application/json",
             success: function (response) {
                 console.log("İstek başarıyla tamamlandı. Sunucu cevabı:", response);
+                tableRefresh();
             },
             error: function (xhr, status, error) {
                 console.error("İstek sırasında bir hata oluştu:", error);
