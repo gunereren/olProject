@@ -9,7 +9,7 @@ import WKT from 'ol/format/WKT.js';
 const saveParcelBtn = document.getElementById("saveParcel");
 const mainEditBtn = document.getElementById("mainEditButton");
 const cancelBtn = document.getElementById("cancelBtn");
-
+var wktGeoms;
 
 const raster = new TileLayer({
     source: new OSM(),
@@ -63,51 +63,54 @@ function addInteractions() {
 }
 
 // TABLONUN VERİTABANINA GÖRE KENDİNİ DOLDURMASI
-var tablo = document.getElementById("table");
-$.ajax({
-    url: "https://localhost:44384/api/Parcel/getall",
-    method: "GET",
-    success: function (data) {
-        // Veri başarıyla alındığında yapılacak işlemler
-        console.log(data);
-        for(let i = 0 ; i < data.length ; i++){
-            var yeniSatir = tablo.insertRow(tablo.rows.length);
-            yeniSatir.style = "background-color: white;"
+function tableRefresh() {
+    var tablo = document.getElementById("table");
+    $.ajax({
+        url: "https://localhost:44384/api/Parcel/getall",
+        method: "GET",
+        success: function (data) {
+            // Veri başarıyla alındığında yapılacak işlemler
+            console.log(data);
+            for (let i = 0; i < data.length; i++) {
+                var yeniSatir = tablo.insertRow(tablo.rows.length);
+                yeniSatir.style = "background-color: white;"
 
-            var huc1 = yeniSatir.insertCell(0);
-            var huc2 = yeniSatir.insertCell(1);
-            var huc3 = yeniSatir.insertCell(2);
-            var huc4 = yeniSatir.insertCell(3);
+                var huc1 = yeniSatir.insertCell(0);
+                var huc2 = yeniSatir.insertCell(1);
+                var huc3 = yeniSatir.insertCell(2);
+                var huc4 = yeniSatir.insertCell(3);
 
-            huc1.innerHTML = data[i].parcelCity;
-            huc2.innerHTML = data[i].parcelDistrict;
-            huc3.innerHTML = data[i].parcelNeighbourhood;
+                huc1.innerHTML = data[i].parcelCity;
+                huc2.innerHTML = data[i].parcelDistrict;
+                huc3.innerHTML = data[i].parcelNeighbourhood;
 
-            var duzenleButon = document.createElement("button");        // Tablo Edit butonu
-            duzenleButon.innerHTML = '<i class="fa-regular fa-pen-to-square"></i> Edit';
-            duzenleButon.style = "margin:0 1rem; text-align: center;"
-            huc4.appendChild(duzenleButon);
+                var duzenleButon = document.createElement("button");        // Tablo Edit butonu
+                duzenleButon.innerHTML = '<i class="fa-regular fa-pen-to-square"></i> Edit';
+                duzenleButon.style = "margin:0 1rem; text-align: center;"
+                huc4.appendChild(duzenleButon);
 
-            duzenleButon.onclick = function (event) {
-                var butonunOlduguSatir = event.target.closest("tr");
-                editingPopup(butonunOlduguSatir);
-            };
+                duzenleButon.onclick = function (event) {
+                    var butonunOlduguSatir = event.target.closest("tr");
+                    editingPopup(butonunOlduguSatir);
+                };
 
-            var silButon = document.createElement("button");            // Tablo Delete butonu
-            silButon.innerHTML = "<i class=\"fa-solid fa-xmark\" style=\"color: #000000;\"></i> Delete";
-            huc4.appendChild(silButon);
+                var silButon = document.createElement("button");            // Tablo Delete butonu
+                silButon.innerHTML = "<i class=\"fa-solid fa-xmark\" style=\"color: #000000;\"></i> Delete";
+                huc4.appendChild(silButon);
 
-            silButon.onclick = function (event) {
-                var butonunOlduguSatir = event.target.closest("tr");
-                deleteRow(butonunOlduguSatir);
-            };
+                silButon.onclick = function (event) {
+                    var butonunOlduguSatir = event.target.closest("tr");
+                    deleteRow(butonunOlduguSatir);
+                };
+            }
+        },
+        error: function () {
+            // Hata durumunda yapılacak işlemler
+            alert("VERİTABANINDAN VERİLER OKUNAMADI")
         }
-    },
-    error: function () {
-        // Hata durumunda yapılacak işlemler
-        alert("VERİTABANINDAN VERİLER OKUNAMADI")
-    }
-});
+    });
+}
+tableRefresh();
 
 
 // ÇİZİM BİTİNCE ÇALIŞAN FONKSİYON
@@ -117,15 +120,37 @@ function onDrawEnd(event) {
     popup.style.display = "block";
     popupbackground.style.display = "block";
 
-    var wkt = format.writeGeometry(event.feature.getGeometry());    // Geometriyi al ve writeGeometry fonksiyonunun içine at
+    wktGeoms = format.writeGeometry(event.feature.getGeometry());    // Geometriyi al ve writeGeometry fonksiyonunun içine at
     // var transformedCoordinates = format.readGeometry(wkt).transform('EPSG:3857', 'EPSG:4326');
-    console.log("WKT Geoms:", wkt);
+    console.log("WKT Geoms:", wktGeoms);
 }
 
 // PARSELİ KAYDET BUTONUNA BASINCA OLACAKLAR
 saveParcelBtn.addEventListener("click", function () {
     var inputElements = document.getElementsByClassName("inputBox");
-    
+
+    var veri = {
+        ParcelCity: inputElements[0].value,
+        ParcelDistrict: inputElements[1].value,
+        ParcelNeighbourhood: inputElements[2].value,
+        wkt: wktGeoms
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "https://localhost:44384/api/Parcel/add",
+        data: JSON.stringify(veri),
+        // dataType: "JSON",
+        contentType: "application/json",
+        success: function (response) {
+            console.log("İstek başarıyla tamamlandı. Sunucu cevabı:", response);
+            tableRefresh();
+        },
+        error: function (xhr, status, error) {
+            console.error("Istek sirasinda bir hata olustu:", error);
+            debugger;
+        }
+    });
     popup.style.display = 'none';
     popupBackground.style.display = "none";
 });
