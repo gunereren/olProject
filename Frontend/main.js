@@ -74,6 +74,7 @@ function tableRefresh() {
             for (let i = 0; i < data.length; i++) {
                 var yeniSatir = tablo.insertRow(tablo.rows.length);
                 yeniSatir.style = "background-color: white;"
+                yeniSatir.id = data[i].parcelId;
 
                 var huc1 = yeniSatir.insertCell(0);
                 var huc2 = yeniSatir.insertCell(1);
@@ -160,6 +161,17 @@ function deleteRow(mevcutSatir) {
     var uyar = confirm("Bu satırı silmek istediğinize emin misiniz?");
     if (uyar) {
         mevcutSatir.parentNode.removeChild(mevcutSatir);
+        $.ajax({
+            type: "DELETE",
+            url: "https://localhost:44384/api/Parcel/delete",
+            data: JSON.stringify(parcelId),
+            success: function (response) {
+                console.log("İstek başarıyla tamamlandı. Sunucu cevabı:", response);
+            },
+            error: function (xhr, status, error) {
+                console.error("İstek sırasında bir hata oluştu:", error);
+            }
+        });
     }
 }
 
