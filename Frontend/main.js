@@ -110,6 +110,7 @@ function tableRefresh() {
                 };
 
                 var silButon = document.createElement("button");            // Tablo Delete butonu
+                silButon.style = "margin:0 1rem 0 0; text-align: center;"
                 silButon.innerHTML = "<i class=\"fa-solid fa-xmark\" style=\"color: #000000;\"></i> Delete";
                 huc4.appendChild(silButon);
 
@@ -117,6 +118,16 @@ function tableRefresh() {
                     var butonunOlduguSatir = event.target.closest("tr");
                     deleteRow(butonunOlduguSatir);
                 };
+
+                var showButton = document.createElement("button");             // Tablo show button
+                showButton.style = "margin:0 1rem 0 0; text-align: center;"
+                showButton.innerHTML = "Haritada Göster";
+                huc4.appendChild(showButton);
+
+                showButton.onclick = function (event) {
+                    var butonunOlduguSatir = event.target.closest("tr");
+                    showFeature(butonunOlduguSatir.id)
+                }
             }
         },
         error: function () {
@@ -168,6 +179,23 @@ saveParcelBtn.addEventListener("click", function () {
     popup.style.display = 'none';
     popupBackground.style.display = "none";
 });
+
+// Çizim gösteren fonksiyon
+function showFeature(satirId) {
+    $.ajax({
+        url: "https://localhost:44384/api/Parcel/getbyid?parcelId="+satirId,
+        method: "GET",
+        success: function (parcel){
+            source.addFeature(format.readFeature(parcel.wkt))
+        },
+        error: function () {
+            // Hata durumunda yapılacak işlemler
+            alert("ÇİZİM GÖSTERİLEMİYOR");
+        }
+    });
+
+}
+
 
 // TABLODAN ELEMAN SİLEN FONKSİYON
 function deleteRow(mevcutSatir) {
