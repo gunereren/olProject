@@ -44,7 +44,7 @@ namespace WebAPI.Controllers
             var result = _parcelService.Add(parcel);
             if (result.Success)
             {
-                return Ok(result.Message);
+                return Ok(parcel.ParcelId);
             }
             return BadRequest(result.Message);
         }
