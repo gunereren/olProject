@@ -59,7 +59,6 @@ function addInteractions() {
     snap = new Snap({ source: source });
     map.addInteraction(snap);
     draw.addEventListener("drawend", onDrawEnd);            // çizme işlemi bitince tetiklenecek
-
 }
 
 // TABLONUN VERİTABANINA GÖRE KENDİNİ DOLDURMASI
@@ -70,7 +69,6 @@ function tableRefresh() {
         method: "GET",
         success: function (parcels) {
             // Veri başarıyla alındığında yapılacak işlemler
-            console.log(parcels);
             $("#table").empty();
 
             var baslik = tablo.insertRow(tablo.rows.length);
@@ -161,6 +159,9 @@ saveParcelBtn.addEventListener("click", function () {
         contentType: "application/json",
         success: function (response) {
             console.log("İstek başarıyla tamamlandı. Sunucu cevabı:", response);
+            inputElements[0].value = "";
+            inputElements[1].value = "";
+            inputElements[2].value = "";
             tableRefresh();
         },
         error: function (xhr, status, error) {
@@ -280,8 +281,22 @@ const popupBackground = document.getElementById("popupBackground");
 popupBackground.onclick = function () {
     popup.style.display = 'none';
     popupBackground.style.display = "none";
+
+    var inputElements = document.getElementsByClassName("inputBox");
+    inputElements[0].value = "";
+    inputElements[1].value = "";
+    inputElements[2].value = "";
+
     var cizimler = source.getFeatures();
-    source.removeFeature(cizimler[cizimler.length - 1]);
+    var lastIndex = cizimler.length;
+
+    for(var i = 0 ; i< lastIndex ; i ++){
+        if (cizimler[i].uniqueID == undefined) {
+            source.removeFeature(cizimler[i]);
+        } 
+    }
+    
+    tableRefresh();
 }
 
 // POPUP KAPATMA BUTONU
