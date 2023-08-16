@@ -98,6 +98,8 @@ function tableRefresh() {
                 huc1.innerHTML = parcels[i].parcelCity;
                 huc2.innerHTML = parcels[i].parcelDistrict;
                 huc3.innerHTML = parcels[i].parcelNeighbourhood;
+                source.addFeature(format.readFeature(parcels[i].wkt));
+                source.getFeatures()[source.getFeatures().length - 1].set("uniqueID", parcels[i].parcelId);
 
                 var duzenleButon = document.createElement("button");        // Tablo Edit butonu
                 duzenleButon.innerHTML = '<i class="fa-regular fa-pen-to-square"></i> Edit';
@@ -118,16 +120,6 @@ function tableRefresh() {
                     var butonunOlduguSatir = event.target.closest("tr");
                     deleteRow(butonunOlduguSatir);
                 };
-
-                var showButton = document.createElement("button");             // Tablo show button
-                showButton.style = "margin:0 1rem 0 0; text-align: center;"
-                showButton.innerHTML = "Haritada Göster";
-                huc4.appendChild(showButton);
-
-                showButton.onclick = function (event) {
-                    var butonunOlduguSatir = event.target.closest("tr");
-                    showFeature(butonunOlduguSatir.id)
-                }
             }
         },
         error: function () {
@@ -173,28 +165,11 @@ saveParcelBtn.addEventListener("click", function () {
         },
         error: function (xhr, status, error) {
             console.error("Istek sirasinda bir hata olustu:", error);
-            debugger;
         }
     });
     popup.style.display = 'none';
     popupBackground.style.display = "none";
 });
-
-// Çizim gösteren fonksiyon
-function showFeature(satirId) {
-    $.ajax({
-        url: "https://localhost:44384/api/Parcel/getbyid?parcelId="+satirId,
-        method: "GET",
-        success: function (parcel){
-            source.addFeature(format.readFeature(parcel.wkt))
-        },
-        error: function () {
-            // Hata durumunda yapılacak işlemler
-            alert("ÇİZİM GÖSTERİLEMİYOR");
-        }
-    });
-
-}
 
 
 // TABLODAN ELEMAN SİLEN FONKSİYON
@@ -202,11 +177,12 @@ function deleteRow(mevcutSatir) {
     var uyar = confirm("Bu satırı silmek istediğinize emin misiniz?");
     if (uyar) {
         mevcutSatir.parentNode.removeChild(mevcutSatir);
-        
-        var silinecekVeri = {
-            "parcelId": parseInt(mevcutSatir.id) 
-        }
 
+        var silinecekVeri = {
+            "parcelId": parseInt(mevcutSatir.id)
+        }
+        featureRemover(mevcutSatir);
+        source.removeFeature()
         $.ajax({
             type: "DELETE",
             url: "https://localhost:44384/api/Parcel/delete",
@@ -221,6 +197,27 @@ function deleteRow(mevcutSatir) {
             }
         });
     }
+}
+
+// HARİTADAKİ ÇİZİMLERİ SİLEN FONKSİYON
+function featureRemover(mevcutSatir) {
+    let id = mevcutSatir.id
+    $.ajax({
+        url: "https://localhost:44384/api/Parcel/getbyid?parcelId=" + id,
+        method: "GET",
+
+        success: function (parcel) {
+            var cizimler = source.getFeatures();
+            for(var i = 0 ; i< cizimler.length ; i++){
+                if (cizimler[i].uniqueID == parcel.id){
+                    source.removeFeature(cizimler[i]);
+                }
+            }
+        },
+        error: function () {
+            alert("ÇİZİM GÖSTERİLEMİYOR");
+        }
+    });
 }
 
 // TABLODA OLAN EDİT BUTONUNA TIKLAYINCA ÇALIŞAN
@@ -257,7 +254,7 @@ function editingPopupClose() {
 
 function veriiOkuBakim() {
     alert("Burayı düzenlemek lazım. Örnek bir veri çekme operasyonu");
-    const denemeTxt = $.ajax({
+    $.ajax({
         url: "https://localhost:44384/api/parcel/getall",
         method: "get",
         success: function (data) {
