@@ -246,6 +246,14 @@ function editWithPopup(mevcutSatir) {
         var inputBox = document.getElementById(editInputID);
         inputBox.value = hucreler[i].textContent;
     }
+
+    cancelBtn.onclick = function () {
+        const editingPopup = document.getElementById("editingPopup");
+        editingPopup.style.display = "none";
+
+        const editPopupBackground = document.getElementById("editPopupBackground");
+        editPopupBackground.style.display = "none";
+    }
 }
 
 // EDİT POPUP KAPATMA BUTONU
