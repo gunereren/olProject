@@ -77,6 +77,10 @@ function tableRefresh() {
             var baslikHucre3 = baslik.insertCell(2);
             var baslikHucre4 = baslik.insertCell(3);
             baslik.style = "height: 2.5rem;"
+            baslikHucre1.style = "width: 16.66%;";
+            baslikHucre2.style = "width: 16.66%;";
+            baslikHucre3.style = "width: 16.66%;";
+            baslikHucre4.style = "width: 50%;";
             baslikHucre1.innerHTML = "Parsel İl";
             baslikHucre2.innerHTML = "Parsel İlçe";
             baslikHucre3.innerHTML = "Parsel Mahalle";
