@@ -9,6 +9,7 @@ import WKT from 'ol/format/WKT.js';
 const saveParcelBtn = document.getElementById("saveParcel");
 const mainEditBtn = document.getElementById("mainEditButton");
 const cancelBtn = document.getElementById("cancelBtn");
+const updateBtn = document.getElementById("updateBtn");
 var wktGeoms;
 
 const raster = new TileLayer({
@@ -232,12 +233,8 @@ function editingPopup(mevcutSatir) {
     editingPopup.style.display = "block";
     editPopupBackground.style.display = "block";
 
-    editWithPopup(mevcutSatir)
     const closeBtn = document.getElementById("editingClosePopupButton");
     closeBtn.onclick = editingPopupClose;
-};
-
-function editWithPopup(mevcutSatir) {
     var hucreler = mevcutSatir.getElementsByTagName('td');
 
     for (var i = 0; i < hucreler.length - 1; i++) {
@@ -254,7 +251,46 @@ function editWithPopup(mevcutSatir) {
         const editPopupBackground = document.getElementById("editPopupBackground");
         editPopupBackground.style.display = "none";
     }
-}
+
+    updateBtn.onclick = function () {
+        console.log("update buton tıklama olayı gerçekleşti");
+        let id = parseInt(mevcutSatir.id);
+        var inputBox = document.getElementsByClassName("editInputBox");
+        var cizimler = source.getFeatures();
+        var selectedFeature;
+        debugger
+        for (var i = 0; i < cizimler.length; i++) {
+            if (cizimler[i].values_.uniqueID == id) {
+                selectedFeature = cizimler[i];
+                break
+            }
+        }
+        $.ajax({
+            type: "POST",
+            url: "https://localhost:44384/api/Parcel/update",
+            data: JSON.stringify({
+                parcelId: id,
+                parcelCity: inputBox[0].value,
+                parcelDistrict: inputBox[1].value,
+                parcelNeighbourhood: inputBox[2].value,
+                wkt: format.writeGeometry(selectedFeature.getGeometry())
+            }),
+            contentType: "application/json",
+            success: function (response) {
+                tableRefresh();
+                const editingPopup = document.getElementById("editingPopup");
+                editingPopup.style.display = "none";
+
+                const editPopupBackground = document.getElementById("editPopupBackground");
+                editPopupBackground.style.display = "none";
+            },
+            error: function (xhr, status, error) {
+                console.error("Istek sirasinda bir hata olustu:", error);
+            }
+        });
+    }
+};
+
 
 // EDİT POPUP KAPATMA BUTONU
 function editingPopupClose() {
