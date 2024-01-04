@@ -40,13 +40,14 @@ const map = new Map({
     target: 'map',
     view: new View({
         center: [0, 0],                     // Harita ilk açıldığında karşımıza çıkan konum
-        zoom: 2,                                        // Harita ilk açıldığında zoom miktarı
+        zoom: 3,                                        // Harita ilk açıldığında zoom miktarı
         extent,
     }),
 });
 
+/* debugger
 const modify = new Modify({ source: source });
-map.addInteraction(modify);
+map.addInteraction(modify); */
 
 let draw, snap; // global so we can remove them later
 const typeSelect = document.getElementById('type');
@@ -127,7 +128,7 @@ function tableRefresh() {
         },
         error: function () {
             // Hata durumunda yapılacak işlemler
-            alert("VERİTABANINDAN VERİLER OKUNAMADI")
+            alert("VERİTABANINDAN VERİLER OKUNAMADI. BACKEND'IN ÇALIŞIP ÇALIŞMADIĞINI KONTROL ET!")
         }
     });
 }
@@ -214,8 +215,8 @@ function featureRemover(mevcutSatir) {
 
         success: function (parcel) {
             var cizimler = source.getFeatures();
-            for(var i = 0 ; i< cizimler.length ; i++){
-                if (cizimler[i].uniqueID == parcel.id){
+            for (var i = 0; i < cizimler.length; i++) {
+                if (cizimler[i].uniqueID == parcel.id) {
                     source.removeFeature(cizimler[i]);
                 }
             }
@@ -258,7 +259,6 @@ function editingPopup(mevcutSatir) {
         var inputBox = document.getElementsByClassName("editInputBox");
         var cizimler = source.getFeatures();
         var selectedFeature;
-        debugger
         for (var i = 0; i < cizimler.length; i++) {
             if (cizimler[i].values_.uniqueID == id) {
                 selectedFeature = cizimler[i];
@@ -301,21 +301,6 @@ function editingPopupClose() {
     editPopupBackground.style.display = "none";
 }
 
-function veriiOkuBakim() {
-    alert("Burayı düzenlemek lazım. Örnek bir veri çekme operasyonu");
-    $.ajax({
-        url: "https://localhost:44384/api/parcel/getall",
-        method: "get",
-        success: function (data) {
-            console.log(data, "verisi okunduuu");
-        },
-        error: function () {
-            console.log("okuyamadık hata oldu");
-        }
-    });
-
-}
-
 // EDİT POPUP ARKAPLANA TIKLAYINCA KAPATMA
 const editPopupBackground = document.getElementById("editPopupBackground");
 editPopupBackground.onclick = function () {
@@ -338,12 +323,12 @@ popupBackground.onclick = function () {
     var cizimler = source.getFeatures();
     var lastIndex = cizimler.length;
 
-    for(var i = 0 ; i< lastIndex ; i ++){
+    for (var i = 0; i < lastIndex; i++) {
         if (cizimler[i].uniqueID == undefined) {
             source.removeFeature(cizimler[i]);
-        } 
+        }
     }
-    
+
     tableRefresh();
 }
 
@@ -374,7 +359,45 @@ document.getElementById("zoom-in").addEventListener("click", function () {
 
 
 // ANA EKRANDA DURAN BÜYÜK EDİT BUTONU
-mainEditBtn.addEventListener("click", veriiOkuBakim);
+var isOn = false;
+mainEditBtn.textContent = "Mod: Çizim Modu";
+mainEditBtn.addEventListener("click", function () {
+    isOn = !isOn;
+    const modify = new Modify({ source: source });
+    if (isOn) {
+        mainEditBtn.textContent = "Mod: Düzenleme Modu";
+        // Açık olduğunda olması gerekenler
+        map.removeInteraction(draw);
+        map.addInteraction(modify);
+
+        // Tıklama olayını izle
+        map.on('click', function (event) {
+            var clickedFeatures = map.getFeaturesAtPixel(event.pixel, {
+                hitTolerance: 10
+            });
+            var selectedFeature
+            
+            if (clickedFeatures) {
+                for(var i = 0 ; i< clickedFeatures.length ; i++){
+                    if (clickedFeatures[i].values_.uniqueID != undefined){
+                        selectedFeature = clickedFeatures[i];
+                        console.log(selectedFeature.values_.uniqueID);
+                        break
+                    }
+                };
+            }
+        });
+    }
+    else {
+        mainEditBtn.textContent = "Mod: Çizim Modu";
+        // Kapalı olduğunda olması gerekenler
+        map.removeInteraction(modify);
+        map.addInteraction(draw);
+    }
+
+
+
+});
 
 // Handle change event.
 typeSelect.onchange = function () {
